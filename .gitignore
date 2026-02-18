@@ -1,0 +1,106 @@
+# ExamForms.org - Git Ignore File
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/media/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Scrapy
+.scrapy/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Database
+*.sql
+*.db
+
+# Logs
+logs/
+*.log
+
+# Backup files
+*.bak
+backup/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+tmp_rovodev_*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Node (if using Next.js)
+node_modules/
+.next/
+out/
+
+# Deployment
+*.pem
+*.key
+secrets/
+
+# Documentation builds
+docs/_build/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Playwright
+playwright/.cache/

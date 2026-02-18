@@ -1,0 +1,11 @@
+test_connection_pool_singleton (__main__.TestCriticalBugFixes.test_connection_pool_singleton)
+Test that DatabasePipeline uses a singleton for the engine ... ok
+test_hardcoded_year_removed (__main__.TestCriticalBugFixes.test_hardcoded_year_removed)
+Test that scrapers don't have hardcoded 2026 ... ok
+test_re_import_and_slugify (__main__.TestCriticalBugFixes.test_re_import_and_slugify)
+Test that re is imported and _slugify works without error ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.004s
+
+OK

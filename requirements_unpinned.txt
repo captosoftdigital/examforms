@@ -1,0 +1,24 @@
+# Unpinned requirements for Python 3.14
+Django
+djangorestframework
+psycopg2-binary
+SQLAlchemy
+Scrapy
+beautifulsoup4
+lxml
+requests
+playwright
+python-dateutil
+celery
+redis
+PyPDF2
+pdfplumber
+Pillow
+sitemap-generator
+python-dotenv
+pyyaml
+pytest
+pytest-django
+sentry-sdk
+black
+flake8

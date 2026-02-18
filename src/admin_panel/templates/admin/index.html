@@ -1,0 +1,9 @@
+{% extends "admin/index.html" %}
+{% load admin_dashboard %}
+
+{% block content %}
+  <div class="dashboard-cards">
+    {% dashboard_cards %}
+  </div>
+  {{ block.super }}
+{% endblock %}
