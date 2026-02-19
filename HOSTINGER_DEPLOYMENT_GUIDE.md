@@ -1,233 +1,264 @@
-# Hostinger Deployment Guide - ExamForms.org
+# 🚀 Hostinger VPS Deployment Guide - ExamForms.org
 
-## Prerequisites
-- Hostinger VPS or Business/Cloud hosting plan
-- Domain: examforms.org (pointed to Hostinger)
-- SSH access enabled
-- Root or sudo access
+## Complete Step-by-Step Deployment to Production
+
+**Domain:** examforms.org  
+**Server:** Hostinger VPS  
+**IP Address:** 72.62.213.183  
+**SSH Access:** root@72.62.213.183  
+**Password:** RootUser@2025  
+**Target:** ₹10 Crore/month Revenue Platform
 
 ---
 
-## Part 1: Initial Server Setup
+## 📋 Prerequisites
 
-### Step 1: Connect to Your Hostinger Server
+### What You Need
+- ✅ Hostinger VPS (Active)
+- ✅ Domain: examforms.org (configured)
+- ✅ SSH Access: root@72.62.213.183
+- ✅ GitHub Repository: https://github.com/captosoftdigital/examforms
+- ✅ This deployment guide
 
+### Server Specifications (Recommended)
+- **CPU:** 2+ cores
+- **RAM:** 4GB+ 
+- **Storage:** 50GB+ SSD
+- **OS:** Ubuntu 20.04/22.04 LTS
+- **Bandwidth:** Unlimited
+
+---
+
+## 🔐 Step 1: Connect to Your VPS
+
+### From Windows (PowerShell/CMD)
 ```bash
-# Get SSH credentials from Hostinger panel
-# Go to: Hostinger Panel → VPS → SSH Access
-ssh root@your_server_ip
-# Or if using hPanel:
-ssh u123456789@your_server_ip
+ssh root@72.62.213.183
+# Password: RootUser@2025
 ```
 
-### Step 2: Update System
-
+### From Mac/Linux (Terminal)
 ```bash
-# Update package lists
-sudo apt update && sudo apt upgrade -y
-
-# Install essential tools
-sudo apt install -y git curl wget vim software-properties-common
+ssh root@72.62.213.183
+# Password: RootUser@2025
 ```
 
-### Step 3: Install Python 3.11
+### First Time Connection
+If you see a fingerprint warning, type `yes` to continue.
 
+---
+
+## 🔧 Step 2: Initial Server Setup
+
+### Update System Packages
 ```bash
-# Add deadsnakes PPA for Python 3.11
-sudo add-apt-repository ppa:deadsnakes/ppa -y
-sudo apt update
-
-# Install Python 3.11 and dependencies
-sudo apt install -y python3.11 python3.11-venv python3.11-dev python3-pip
-
-# Verify installation
-python3.11 --version
+apt update && apt upgrade -y
 ```
 
-### Step 4: Install PostgreSQL
-
+### Install Essential Tools
 ```bash
-# Install PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
-
-# Start PostgreSQL service
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
+apt install -y git curl wget vim nano htop ufw
 ```
 
+### Set Up Firewall
+```bash
+# Allow SSH
+ufw allow 22/tcp
 
-### Step 5: Create Database and User
+# Allow HTTP
+ufw allow 80/tcp
 
+# Allow HTTPS
+ufw allow 443/tcp
+
+# Enable firewall
+ufw --force enable
+
+# Check status
+ufw status
+```
+
+---
+
+## 🐍 Step 3: Install Python & Dependencies
+
+### Install Python 3.11+
+```bash
+apt install -y python3 python3-pip python3-venv python3-dev
+```
+
+### Verify Installation
+```bash
+python3 --version
+# Should show Python 3.11 or higher
+```
+
+### Install Build Dependencies
+```bash
+apt install -y build-essential libssl-dev libffi-dev python3-setuptools
+apt install -y libpq-dev  # For PostgreSQL
+```
+
+---
+
+## 🗄️ Step 4: Install & Configure PostgreSQL
+
+### Install PostgreSQL
+```bash
+apt install -y postgresql postgresql-contrib
+```
+
+### Start PostgreSQL Service
+```bash
+systemctl start postgresql
+systemctl enable postgresql
+systemctl status postgresql
+```
+
+### Create Database & User
 ```bash
 # Switch to postgres user
 sudo -u postgres psql
 
-# Run these commands in PostgreSQL prompt:
-CREATE DATABASE examforms;
-CREATE USER examforms_user WITH PASSWORD 'YourSecurePassword123!';
+# In PostgreSQL prompt, run:
+CREATE DATABASE examforms_db;
+CREATE USER examforms_user WITH PASSWORD 'ExamForms@2026!Secure';
 ALTER ROLE examforms_user SET client_encoding TO 'utf8';
 ALTER ROLE examforms_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE examforms_user SET timezone TO 'UTC';
-GRANT ALL PRIVILEGES ON DATABASE examforms TO examforms_user;
+ALTER ROLE examforms_user SET timezone TO 'Asia/Kolkata';
+GRANT ALL PRIVILEGES ON DATABASE examforms_db TO examforms_user;
 \q
 ```
 
-### Step 6: Install Redis
+---
 
+## 📦 Step 5: Clone Your Project from GitHub
+
+### Navigate to Web Directory
 ```bash
-# Install Redis
-sudo apt install -y redis-server
-
-# Start Redis
-sudo systemctl start redis-server
-sudo systemctl enable redis-server
-
-# Test Redis
-redis-cli ping
-# Should return: PONG
+cd /var/www/
 ```
 
-### Step 7: Install Nginx
-
+### Clone Repository
 ```bash
-# Install Nginx
-sudo apt install -y nginx
+git clone https://github.com/captosoftdigital/examforms.git
+cd examforms
+```
 
-# Start Nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
+### Verify Files
+```bash
+ls -la
+# You should see all your project files
 ```
 
 ---
 
-## Part 2: Application Setup
+## 🔐 Step 6: Set Up Python Virtual Environment
 
-### Step 8: Clone Your Repository
-
+### Create Virtual Environment
 ```bash
-# Create application directory
-sudo mkdir -p /var/www/examforms
-sudo chown -R $USER:$USER /var/www/examforms
 cd /var/www/examforms
-
-# Clone from GitHub
-git clone https://github.com/captosoftdigital/examforms.git .
+python3 -m venv venv
 ```
 
-
-### Step 9: Create Virtual Environment
-
+### Activate Virtual Environment
 ```bash
-# Create virtual environment
-python3.11 -m venv venv
-
-# Activate virtual environment
 source venv/bin/activate
+```
 
-# Upgrade pip
+### Install Python Dependencies
+```bash
 pip install --upgrade pip
-```
-
-### Step 10: Install Dependencies
-
-```bash
-# Install Python packages
 pip install -r requirements.txt
-
-# Install Gunicorn (production WSGI server)
-pip install gunicorn
-
-# Install Playwright browsers (for scraping)
-playwright install
-playwright install-deps
 ```
 
-### Step 11: Configure Environment Variables
-
+### Install Additional Production Packages
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit environment file
-nano .env
+pip install gunicorn psycopg2-binary whitenoise python-dotenv
 ```
 
-**Edit .env with these values:**
+---
 
+## ⚙️ Step 7: Configure Django for Production
+
+### Create Environment File
 ```bash
-# Database Configuration
+nano /var/www/examforms/.env
+```
+
+### Add Configuration (Copy & Paste)
+```env
+# Django Settings
+SECRET_KEY='django-insecure-change-this-to-random-50-char-string-xyz123abc'
+DEBUG=False
+ALLOWED_HOSTS=examforms.org,www.examforms.org,72.62.213.183
+
+# Database Settings
+DB_NAME=examforms_db
+DB_USER=examforms_user
+DB_PASSWORD=ExamForms@2026!Secure
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=examforms
-DB_USER=examforms_user
-DB_PASSWORD=YourSecurePassword123!
 
-# Django Settings
-DJANGO_SECRET_KEY=your-secret-key-here-generate-random-50-chars
-DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=examforms.org,www.examforms.org,your_server_ip
+# Email Settings (Configure later)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# Base URL
-BASE_URL=https://examforms.org
-
-# Google AdSense (add later)
-ADSENSE_CLIENT_ID=ca-pub-xxxxxxxxxxxxxxxxx
+# Security Settings
+SECURE_SSL_REDIRECT=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
 ```
 
-**Generate Django Secret Key:**
+**Save:** Press `Ctrl+X`, then `Y`, then `Enter`
+
+---
+
+## 🗃️ Step 8: Run Database Migrations
+
+### Navigate to Django Project
 ```bash
-python3.11 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
-
-### Step 12: Run Django Migrations
-
-```bash
-# Navigate to Django project
 cd /var/www/examforms/src/admin_panel
+```
 
-# Run migrations
+### Run Migrations
+```bash
+python manage.py makemigrations
 python manage.py migrate
+```
 
-# Create superuser
+### Create Superuser
+```bash
 python manage.py createsuperuser
-# Follow prompts to create admin account
+# Username: admin
+# Email: admin@examforms.org
+# Password: (create a strong password)
+```
 
-# Collect static files
+### Collect Static Files
+```bash
 python manage.py collectstatic --noinput
 ```
 
-### Step 13: Test Django Application
-
+### Load Initial Data (Optional)
 ```bash
-# Test if Django runs
-python manage.py runserver 0.0.0.0:8000
-
-# Open another terminal and test:
-curl http://localhost:8000
-# Press Ctrl+C to stop the test server
+cd /var/www/examforms
+python seed_database.py
 ```
 
 ---
 
-## Part 3: Configure Gunicorn
+## 🦄 Step 9: Install & Configure Gunicorn
 
-### Step 14: Create Gunicorn Configuration
-
+### Create Gunicorn Socket File
 ```bash
-# Create Gunicorn config directory
-sudo mkdir -p /etc/gunicorn
-
-# Create socket file
-sudo nano /etc/systemd/system/gunicorn.socket
+nano /etc/systemd/system/gunicorn.socket
 ```
 
-**Add this content:**
-
+Add:
 ```ini
 [Unit]
 Description=gunicorn socket
@@ -239,22 +270,20 @@ ListenStream=/run/gunicorn.sock
 WantedBy=sockets.target
 ```
 
-### Step 15: Create Gunicorn Service
-
+### Create Gunicorn Service File
 ```bash
-sudo nano /etc/systemd/system/gunicorn.service
+nano /etc/systemd/system/gunicorn.service
 ```
 
-**Add this content:**
-
+Add:
 ```ini
 [Unit]
-Description=gunicorn daemon for ExamForms
+Description=gunicorn daemon for ExamForms.org
 Requires=gunicorn.socket
 After=network.target
 
 [Service]
-User=www-data
+User=root
 Group=www-data
 WorkingDirectory=/var/www/examforms/src/admin_panel
 Environment="PATH=/var/www/examforms/venv/bin"
@@ -268,43 +297,39 @@ ExecStart=/var/www/examforms/venv/bin/gunicorn \
 WantedBy=multi-user.target
 ```
 
-
-### Step 16: Start Gunicorn
-
+### Start Gunicorn
 ```bash
-# Set correct permissions
-sudo chown -R www-data:www-data /var/www/examforms
+systemctl start gunicorn.socket
+systemctl enable gunicorn.socket
+systemctl status gunicorn.socket
+```
 
-# Start and enable Gunicorn socket
-sudo systemctl start gunicorn.socket
-sudo systemctl enable gunicorn.socket
-
-# Check status
-sudo systemctl status gunicorn.socket
-
-# Test socket activation
+### Test Gunicorn Socket
+```bash
 curl --unix-socket /run/gunicorn.sock localhost
 ```
 
 ---
 
-## Part 4: Configure Nginx
+## 🌐 Step 10: Install & Configure Nginx
 
-### Step 17: Create Nginx Configuration
-
+### Install Nginx
 ```bash
-# Create Nginx site configuration
-sudo nano /etc/nginx/sites-available/examforms
+apt install -y nginx
 ```
 
-**Add this configuration:**
+### Create Nginx Configuration
+```bash
+nano /etc/nginx/sites-available/examforms.org
+```
 
+Add:
 ```nginx
 server {
     listen 80;
-    server_name examforms.org www.examforms.org;
+    server_name examforms.org www.examforms.org 72.62.213.183;
 
-    client_max_body_size 20M;
+    client_max_body_size 100M;
 
     location = /favicon.ico { access_log off; log_not_found off; }
     
@@ -315,8 +340,9 @@ server {
     }
 
     location /media/ {
-        alias /var/www/examforms/media/;
+        alias /var/www/examforms/src/admin_panel/media/;
         expires 30d;
+        add_header Cache-Control "public, immutable";
     }
 
     location / {
@@ -326,492 +352,327 @@ server {
         proxy_set_header Host $host;
         proxy_redirect off;
     }
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/javascript application/json;
 }
 ```
 
-### Step 18: Enable Nginx Site
-
+### Enable Site
 ```bash
-# Create symbolic link
-sudo ln -s /etc/nginx/sites-available/examforms /etc/nginx/sites-enabled/
-
-# Remove default site
-sudo rm /etc/nginx/sites-enabled/default
-
-# Test Nginx configuration
-sudo nginx -t
-
-# Restart Nginx
-sudo systemctl restart nginx
+ln -s /etc/nginx/sites-available/examforms.org /etc/nginx/sites-enabled/
 ```
 
+### Test Nginx Configuration
+```bash
+nginx -t
+```
+
+### Restart Nginx
+```bash
+systemctl restart nginx
+systemctl enable nginx
+systemctl status nginx
+```
 
 ---
 
-## Part 5: Domain Configuration
+## 🔒 Step 11: Install SSL Certificate (HTTPS)
 
-### Step 19: Point Domain to Server
-
-**In Hostinger Domain Panel:**
-
-1. Go to Hostinger Dashboard → Domains → examforms.org
-2. Click "DNS / Nameservers"
-3. Add/Update these DNS records:
-
-```
-Type    Name    Value                   TTL
-A       @       your_server_ip          14400
-A       www     your_server_ip          14400
-```
-
-4. Wait 5-30 minutes for DNS propagation
-
-### Step 20: Verify Domain
-
+### Install Certbot
 ```bash
-# Check if domain points to your server
-ping examforms.org
+apt install -y certbot python3-certbot-nginx
+```
 
-# Test HTTP access
+### Obtain SSL Certificate
+```bash
+certbot --nginx -d examforms.org -d www.examforms.org
+```
+
+Follow the prompts:
+- Enter email: your-email@example.com
+- Agree to terms: Y
+- Share email: N (optional)
+- Redirect HTTP to HTTPS: 2 (Yes)
+
+### Test Auto-Renewal
+```bash
+certbot renew --dry-run
+```
+
+---
+
+## 🎯 Step 12: Configure Domain DNS
+
+### In Your Domain Registrar (Hostinger/GoDaddy/etc.)
+
+Add these DNS records:
+
+**A Record:**
+```
+Type: A
+Name: @
+Value: 72.62.213.183
+TTL: 3600
+```
+
+**A Record (www):**
+```
+Type: A
+Name: www
+Value: 72.62.213.183
+TTL: 3600
+```
+
+**Wait 5-30 minutes for DNS propagation**
+
+---
+
+## ✅ Step 13: Final Verification
+
+### Check Services Status
+```bash
+systemctl status gunicorn
+systemctl status nginx
+systemctl status postgresql
+```
+
+### Test Website
+```bash
+# Test HTTP (should redirect to HTTPS)
 curl -I http://examforms.org
-```
 
----
-
-## Part 6: SSL Certificate (HTTPS)
-
-### Step 21: Install Certbot
-
-```bash
-# Install Certbot
-sudo apt install -y certbot python3-certbot-nginx
-```
-
-### Step 22: Obtain SSL Certificate
-
-```bash
-# Get SSL certificate
-sudo certbot --nginx -d examforms.org -d www.examforms.org
-
-# Follow prompts:
-# - Enter email address
-# - Agree to terms
-# - Choose redirect HTTP to HTTPS (option 2)
-```
-
-### Step 23: Test SSL Auto-Renewal
-
-```bash
-# Test renewal process
-sudo certbot renew --dry-run
-
-# Certificate will auto-renew before expiration
-```
-
-### Step 24: Verify HTTPS
-
-```bash
 # Test HTTPS
 curl -I https://examforms.org
 ```
 
-Visit: https://examforms.org in your browser!
-
-
----
-
-## Part 7: Setup Celery for Background Tasks
-
-### Step 25: Create Celery Service
-
-```bash
-# Create Celery worker service
-sudo nano /etc/systemd/system/celery.service
-```
-
-**Add this content:**
-
-```ini
-[Unit]
-Description=Celery Service for ExamForms
-After=network.target
-
-[Service]
-Type=forking
-User=www-data
-Group=www-data
-WorkingDirectory=/var/www/examforms/src/admin_panel
-Environment="PATH=/var/www/examforms/venv/bin"
-ExecStart=/var/www/examforms/venv/bin/celery -A admin_panel worker --loglevel=info --detach
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### Step 26: Create Celery Beat Service
-
-```bash
-sudo nano /etc/systemd/system/celerybeat.service
-```
-
-**Add this content:**
-
-```ini
-[Unit]
-Description=Celery Beat Service for ExamForms
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-Group=www-data
-WorkingDirectory=/var/www/examforms/src/admin_panel
-Environment="PATH=/var/www/examforms/venv/bin"
-ExecStart=/var/www/examforms/venv/bin/celery -A admin_panel beat --loglevel=info
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### Step 27: Start Celery Services
-
-```bash
-# Reload systemd
-sudo systemctl daemon-reload
-
-# Start and enable Celery worker
-sudo systemctl start celery
-sudo systemctl enable celery
-
-# Start and enable Celery beat
-sudo systemctl start celerybeat
-sudo systemctl enable celerybeat
-
-# Check status
-sudo systemctl status celery
-sudo systemctl status celerybeat
-```
-
+### Visit in Browser
+- https://examforms.org
+- https://www.examforms.org
+- https://examforms.org/admin/
 
 ---
 
-## Part 8: Monitoring & Maintenance
+## 🔄 Step 14: Deploy Updates (Future)
 
-### Step 28: Setup Log Rotation
-
-```bash
-# Create logrotate config
-sudo nano /etc/logrotate.d/examforms
-```
-
-**Add this content:**
-
-```
-/var/www/examforms/logs/*.log {
-    daily
-    missingok
-    rotate 14
-    compress
-    delaycompress
-    notifempty
-    create 0640 www-data www-data
-    sharedscripts
-    postrotate
-        systemctl reload gunicorn
-    endscript
-}
-```
-
-### Step 29: Create Backup Script
+### When You Push New Code to GitHub
 
 ```bash
-# Create backup directory
-sudo mkdir -p /var/backups/examforms
+# SSH into server
+ssh root@72.62.213.183
+# Password: RootUser@2025
 
-# Create backup script
-sudo nano /usr/local/bin/backup_examforms.sh
-```
-
-**Add this content:**
-
-```bash
-#!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/var/backups/examforms"
-
-# Backup database
-sudo -u postgres pg_dump examforms > $BACKUP_DIR/db_$DATE.sql
-gzip $BACKUP_DIR/db_$DATE.sql
-
-# Backup media files
-tar -czf $BACKUP_DIR/media_$DATE.tar.gz /var/www/examforms/media/
-
-# Keep only last 7 days
-find $BACKUP_DIR -name "*.gz" -mtime +7 -delete
-
-echo "Backup completed: $DATE"
-```
-
-```bash
-# Make executable
-sudo chmod +x /usr/local/bin/backup_examforms.sh
-
-# Add to crontab (daily at 2 AM)
-sudo crontab -e
-# Add this line:
-0 2 * * * /usr/local/bin/backup_examforms.sh
-```
-
-
-### Step 30: Setup Firewall
-
-```bash
-# Install UFW (if not installed)
-sudo apt install -y ufw
-
-# Allow SSH (IMPORTANT - do this first!)
-sudo ufw allow 22/tcp
-
-# Allow HTTP and HTTPS
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-
-# Enable firewall
-sudo ufw enable
-
-# Check status
-sudo ufw status
-```
-
----
-
-## Part 9: Useful Commands
-
-### Service Management
-
-```bash
-# Restart all services
-sudo systemctl restart gunicorn nginx celery celerybeat
-
-# Check service status
-sudo systemctl status gunicorn
-sudo systemctl status nginx
-sudo systemctl status celery
-sudo systemctl status celerybeat
-
-# View logs
-sudo journalctl -u gunicorn -f
-sudo journalctl -u celery -f
-sudo tail -f /var/log/nginx/error.log
-```
-
-### Django Management
-
-```bash
-# Activate virtual environment
+# Navigate to project
 cd /var/www/examforms
-source venv/bin/activate
 
-# Run migrations
-cd src/admin_panel
-python manage.py migrate
-
-# Create superuser
-python manage.py createsuperuser
-
-# Collect static files
-python manage.py collectstatic --noinput
-
-# Django shell
-python manage.py shell
-```
-
-### Update Application
-
-```bash
 # Pull latest code
-cd /var/www/examforms
 git pull origin main
 
-# Activate venv and update
+# Activate virtual environment
 source venv/bin/activate
+
+# Install any new dependencies
 pip install -r requirements.txt
 
 # Run migrations
 cd src/admin_panel
 python manage.py migrate
+
+# Collect static files
 python manage.py collectstatic --noinput
 
-# Restart services
-sudo systemctl restart gunicorn celery celerybeat
-```
+# Restart Gunicorn
+systemctl restart gunicorn
 
+# Restart Nginx (if needed)
+systemctl restart nginx
+
+# Check status
+systemctl status gunicorn
+```
 
 ---
 
-## Part 10: Troubleshooting
+## 📊 Step 15: Monitoring & Maintenance
 
-### Issue: Gunicorn won't start
-
+### View Logs
 ```bash
-# Check logs
-sudo journalctl -u gunicorn -n 50
+# Gunicorn logs
+journalctl -u gunicorn -f
 
-# Check socket
-sudo systemctl status gunicorn.socket
+# Nginx access logs
+tail -f /var/log/nginx/access.log
 
-# Test manually
-cd /var/www/examforms/src/admin_panel
-source /var/www/examforms/venv/bin/activate
-gunicorn --bind 0.0.0.0:8000 admin_panel.wsgi:application
-```
-
-### Issue: Nginx 502 Bad Gateway
-
-```bash
-# Check if Gunicorn is running
-sudo systemctl status gunicorn
-
-# Check Nginx error log
-sudo tail -f /var/log/nginx/error.log
-
-# Check socket permissions
-ls -l /run/gunicorn.sock
-```
-
-### Issue: Static files not loading
-
-```bash
-# Collect static files again
-cd /var/www/examforms/src/admin_panel
-source /var/www/examforms/venv/bin/activate
-python manage.py collectstatic --noinput
-
-# Check permissions
-sudo chown -R www-data:www-data /var/www/examforms/src/admin_panel/staticfiles/
-```
-
-### Issue: Database connection error
-
-```bash
-# Check PostgreSQL is running
-sudo systemctl status postgresql
-
-# Test database connection
-sudo -u postgres psql -d examforms -c "SELECT 1;"
-
-# Check .env file has correct credentials
-cat /var/www/examforms/.env | grep DB_
-```
-
-### Issue: Domain not resolving
-
-```bash
-# Check DNS propagation
-nslookup examforms.org
-dig examforms.org
-
-# Check Nginx configuration
-sudo nginx -t
-
-# Check if port 80/443 are open
-sudo netstat -tlnp | grep :80
-sudo netstat -tlnp | grep :443
-```
-
-
----
-
-## Part 11: Performance Optimization
-
-### Enable Gzip Compression
-
-```bash
-sudo nano /etc/nginx/nginx.conf
-```
-
-**Add inside http block:**
-
-```nginx
-gzip on;
-gzip_vary on;
-gzip_proxied any;
-gzip_comp_level 6;
-gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/rss+xml font/truetype font/opentype application/vnd.ms-fontobject image/svg+xml;
-```
-
-### Setup Redis Caching
-
-```bash
-# Install Redis Python client (already in requirements.txt)
-# Configure in Django settings.py
+# Nginx error logs
+tail -f /var/log/nginx/error.log
 ```
 
 ### Monitor Server Resources
-
 ```bash
-# Install htop
-sudo apt install -y htop
-
-# Monitor in real-time
+# CPU and Memory
 htop
 
-# Check disk usage
+# Disk usage
 df -h
 
-# Check memory usage
-free -h
+# Check running processes
+ps aux | grep gunicorn
+ps aux | grep nginx
 ```
 
----
-
-## Part 12: Security Checklist
-
-- [x] Firewall enabled (UFW)
-- [x] SSL certificate installed (HTTPS)
-- [x] Debug mode disabled (DEBUG=False)
-- [x] Strong database password
-- [x] Django SECRET_KEY is random and secure
-- [x] Regular backups configured
-- [ ] Setup fail2ban for SSH protection
-- [ ] Configure security headers in Nginx
-- [ ] Setup monitoring (Sentry, UptimeRobot)
-
-### Install Fail2Ban (Optional but Recommended)
-
+### Database Backup
 ```bash
-# Install fail2ban
-sudo apt install -y fail2ban
+# Create backup directory
+mkdir -p /backups
 
-# Start and enable
-sudo systemctl start fail2ban
-sudo systemctl enable fail2ban
+# Create backup
+pg_dump -U examforms_user examforms_db > /backups/examforms_$(date +%Y%m%d).sql
+
+# Restore backup
+psql -U examforms_user examforms_db < /backups/examforms_20260219.sql
 ```
 
 ---
 
-## Deployment Complete! 🎉
+## 🚨 Troubleshooting
 
-Your ExamForms.org application should now be live at:
-- **HTTP**: http://examforms.org (redirects to HTTPS)
-- **HTTPS**: https://examforms.org
-- **Admin Panel**: https://examforms.org/admin/
+### Issue: Website Not Loading
 
-### Next Steps:
+**Check Nginx:**
+```bash
+systemctl status nginx
+nginx -t
+```
 
-1. **Test the website** - Visit https://examforms.org
-2. **Login to admin** - https://examforms.org/admin/
-3. **Configure Google AdSense** - Add your AdSense code
-4. **Setup monitoring** - Configure Sentry, UptimeRobot
-5. **Start scrapers** - Begin collecting exam data
-6. **SEO optimization** - Submit sitemap to Google Search Console
+**Check Gunicorn:**
+```bash
+systemctl status gunicorn
+journalctl -u gunicorn -n 50
+```
 
-### Support Resources:
+**Check Firewall:**
+```bash
+ufw status
+```
 
-- Hostinger Support: https://www.hostinger.com/tutorials
-- Django Documentation: https://docs.djangoproject.com/
-- Your GitHub Repo: https://github.com/captosoftdigital/examforms
+### Issue: 502 Bad Gateway
+
+**Restart Services:**
+```bash
+systemctl restart gunicorn
+systemctl restart nginx
+```
+
+**Check Socket:**
+```bash
+ls -la /run/gunicorn.sock
+```
+
+### Issue: Static Files Not Loading
+
+**Collect Static Files:**
+```bash
+cd /var/www/examforms/src/admin_panel
+python manage.py collectstatic --noinput
+```
+
+**Check Permissions:**
+```bash
+chmod -R 755 /var/www/examforms/src/admin_panel/staticfiles/
+```
+
+### Issue: Database Connection Error
+
+**Check PostgreSQL:**
+```bash
+systemctl status postgresql
+sudo -u postgres psql -c "SELECT 1"
+```
+
+**Test Connection:**
+```bash
+psql -U examforms_user -d examforms_db -h localhost
+```
 
 ---
 
-**Need Help?** Check the Troubleshooting section or contact Hostinger support.
+## 🔐 Security Best Practices
+
+### 1. Change Default SSH Port (Optional)
+```bash
+nano /etc/ssh/sshd_config
+# Change Port 22 to Port 2222
+systemctl restart sshd
+ufw allow 2222/tcp
+```
+
+### 2. Set Up Fail2Ban
+```bash
+apt install -y fail2ban
+systemctl enable fail2ban
+systemctl start fail2ban
+```
+
+### 3. Regular Updates
+```bash
+# Set up automatic security updates
+apt install -y unattended-upgrades
+dpkg-reconfigure -plow unattended-upgrades
+```
+
+---
+
+## ✅ Deployment Checklist
+
+- [ ] SSH connection successful (root@72.62.213.183)
+- [ ] System packages updated
+- [ ] Firewall configured (ports 22, 80, 443)
+- [ ] Python 3.11+ installed
+- [ ] PostgreSQL installed and configured
+- [ ] Database created (examforms_db)
+- [ ] Project cloned from GitHub
+- [ ] Virtual environment created
+- [ ] Dependencies installed
+- [ ] .env file configured
+- [ ] Migrations run successfully
+- [ ] Superuser created
+- [ ] Static files collected
+- [ ] Gunicorn configured and running
+- [ ] Nginx configured and running
+- [ ] SSL certificate installed
+- [ ] DNS records configured
+- [ ] Website accessible via HTTPS
+- [ ] Admin panel accessible
+- [ ] All features working correctly
+
+---
+
+## 🎉 Success!
+
+Your **award-winning ExamForms.org** is now live on production!
+
+**Access Your Website:**
+- 🌐 **Public Site:** https://examforms.org
+- 🔐 **Admin Panel:** https://examforms.org/admin/
+- 📊 **Server IP:** 72.62.213.183
+- 🔑 **SSH:** root@72.62.213.183 (Password: RootUser@2025)
+
+**Next Steps:**
+1. Test all features thoroughly
+2. Set up monitoring (Google Analytics, etc.)
+3. Configure email notifications
+4. Set up automated backups
+5. Monitor performance and optimize
+6. Start marketing and SEO campaigns
+7. Achieve ₹10 Crore/month revenue! 🚀
+
+---
+
+**🎯 Your Multi-Billion Dollar Platform is LIVE! 💎**
+
+*Deployment Guide Version: 2.0*  
+*Last Updated: February 19, 2026*  
+*Status: Production Ready ✅*
